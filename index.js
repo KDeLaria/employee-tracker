@@ -33,22 +33,22 @@ function mainMenu() {
                         else {  dataQuery = data; }
                         console.log("Title\t\tRole ID\t\tDepartment\t\tSalary");
                         dataQuery.forEach(record => {
-                            console.log(`${record.title}\t\t${record.roleId}\t\t${record.department}\t\t${record.salary}`);
+                            console.log(`${record.title}\t\t${record.roleId}\t\t${record.department}\t\t$${record.salary}`);
                         });
                 });
             }
             else if (response.manuItem === "View all employees") {
-                db.query(`SELECT employee.id AS id, employee.fname AS fname, employee.lname AS lname, role.title AS title,
-                department.name AS department, role.salary AS salary, employee.manager AS manager
+                db.query(`SELECT employee.id AS id, employee.first_name AS fname, employee.last_name AS lname, role.title AS title,
+                department.name AS department, role.salary AS salary, employee.manager_id AS manager
                 FROM employee
                     INNER JOIN role ON role.id = employee.role_id
                         INNER JOIN department on department.id = role.department_id;`, (err, data) => {
                             if (err) {console.log(err);}
                             else {  dataQuery = data; }
-                            console.log("Employee ID\t\tFirst Name\t\tLast Name\t\tTitle\t\tDepartment\t\tSalary\t\tManager");
+                            console.log("Employee ID\t\tFirst Name\t\tLast Name\t\Dapartment\t\Title\t\tSalary\t\tManager");
                             dataQuery.forEach(record => {
-                                console.log(record.id,"\t\t",record.fname,"\t\t",record.lname,"\t\t",record.title,"\t\t",record.name,
-                                "\t\t",record.salary,"\t\t",record.manager);
+                                console.log(record.id,"\t\t",record.fname,"\t\t",record.lname,"\t\t",record.department,
+                                "\t\t",record.title,"\t\t",record.name,"\t\t$",record.salary,"\t\t",record.manager);
                             });
                         });
             }
@@ -68,8 +68,8 @@ function mainMenu() {
                         );
                     }
             else if (response.manuItem === "Add an employee") {
-                db.query(`INSERT INTO employee (fname, lname, role_id, manager)
-                        VALUES (?);`, [newEmployee.fname, newEmployee.lname, newEmployee.role_id, 
+                db.query(`INSERT INTO employee (first_name, last_name, role_id, manager)
+                        VALUES (?);`, [newEmployee.first_name, newEmployee.last_name, newEmployee.role_id, 
                             newEmployee.manager], (err, data) => {
                             if (err) {console.log(err);}
                             else {console.log("\nThe new employee has been added to the database.\n")
