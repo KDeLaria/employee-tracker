@@ -4,7 +4,7 @@ const db = require("./config/connect");
 const menu = ["View all departments", "View all roles", "View all empolyees", "Add department",
     "Add a role", "Add an employee", "Update an employee role", "Quit"];
 
-function mainMenu() {
+async function mainMenu() {
     inquirer.prompt([
         {
             type: "list",
@@ -14,28 +14,22 @@ function mainMenu() {
         }
     ])
         .then(response => {
-            if (menu[0]) {
+            if (response.menuItem === menu[0]) {
                 displayDepartments();
             }
-            else if (menu[1]) {
+            else if (response.menuItem === menu[1]) {
                 displayRoles();
             }
-            else if (menu[2]) {
+            else if (response.menuItem === menu[2]) {
                 displayEmployees();
             }
-            else if (menu[3]) {
+            else if (response.menuItem === menu[3]) {
                 addDepartment();
             }
-            else if (menu[4]) {
-                /////////////////////////////////////////////////////////////////////////////
-                db.query(`INSERT INTO role (title, salary, department_id)
-                        VALUES (?, ?, ?);`, [newRole.title, newRole.salary, newRole.department_id], (err, data) => {
-                    if (err) { console.log(err); }
-                    else { console.log("\nThe new role has been added to the database.\n") }
-                }
-                );
+            else if (response.menuItem === menu[4]) {
+                addRole ();
             }
-            else if (menu[5]) {
+            else if (response.menuItem === menu[5]) {
                 db.query(`INSERT INTO employee (first_name, last_name, role_id, manager)
                         VALUES (?);`, [newEmployee.first_name, newEmployee.last_name, newEmployee.role_id,
                 newEmployee.manager], (err, data) => {
@@ -46,7 +40,7 @@ function mainMenu() {
                 }
                 )
             }
-            else if (menu[6]) {
+            else if (response.menuItem === menu[6]) {
                 db.query(`UPDATE employee
                     SET role_id = ?
                     WHERE id = ?
@@ -56,7 +50,7 @@ function mainMenu() {
                 }
                 )
             }/////////////////////////////////////////////////////////////////////////////////////////
-            else if (menu[7]) { return null; }
+            else if (response.menuItem === menu[7]) { return null; }
         });
 }
 
@@ -82,7 +76,7 @@ function executeQuery(sqlString = "", queryData = null, ackMessage = null) {
 }
 
 function displayDepartments() {
-    executeQuery("SELECT id, name FROM department");
+    executeQuery("SELECT id, name FROM department;");
 }
 
 function displayRoles() {
@@ -99,7 +93,7 @@ function displayEmployees() {
             INNER JOIN department on department.id = role.department_id;`)
 }
 
-function addDepartment() {
+async function addDepartment() {
     inquirer.prompt([
         {
             type: "input",
@@ -109,20 +103,23 @@ function addDepartment() {
     ])
         .then((response) => {
             executeQuery(`INSERT INTO department (name)
-            VALUES (?);`, response.department, "\nThe new employee has been added to the database.\n");
+            VALUES (?);`, response.department, "\nThe new department has been added to the database.\n");
         }
     );
 
 }
 
-function addRole () {
-    const departments = db.query("SELECT id, name FROM department", (err, data) => {return data;});
+/////////////////////////////////////////////////////////////////////////////////////
+async function addRole () {
+    const department = executeQuery("SELECT id, name FROM department;");
+    //db.query("SELECT id, name FROM department;", (err, data) => {console.log(JSON.parse(data))})
+    console.log("Department: ",department);
     inquirer.prompt([
         {
             type: "list",
             message: "Select a department for the role.",
-            choices: departments.name,
-            name: departments.id ////////////////////////////////////
+            choices: department.name,
+            name: department.id ////////////////////////////////////
         },
         {
             type: "input",
@@ -137,10 +134,44 @@ function addRole () {
         
     ])
         .then((response) => {
-            executeQuery(`INSERT INTO role (title, salary, department_id)
+            executeQuery(`INSERT INTO role (department_id, title, salary)
             VALUES (?, ?, ?);`, response, "\nThe new role has been added to the database.\n");
         }
     );
+}//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+async function addEmployee () {
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+    const department = executeQuery("SELECT id, name FROM department");
+    const role = executeQuery(`SELECT role.title AS title, role.id AS id, 
+    department.name AS department, role.salary AS salary
+    FROM role
+        INNER JOIN department ON role.department_id = department.id;`);
+    //newEmployee.first_name, newEmployee.last_name, newEmployee.role_id, newEmployee.manager
+    inquirer.prompt([
+        {
+            type: "input",
+            message: "First Name: ",
+            name: "first_name"
+        },
+        {
+            type: "input",
+            message: "Last name: ",
+            name: "last_name"
+        },
+        {
+            type: "list",
+            message: "Select department for the new employee.",
+            choices: department,
+            name: "department"
+        }
+        
+    ])
+        .then((response) => {
+            executeQuery(`INSERT INTO employee (first_name, last_name, role_id, manager)
+            VALUES (?);`, response, "\nThe employee role has been updated.\n");
+        }
+    );/////////////////////////////////////////////////////////////////////////////////////////////
 }
 
 function init() {
