@@ -1,10 +1,10 @@
-class DataOptions {
+class DataOption {
 
     // Creates an options objects that can be used by inquirer
-    constructor (id, name) {
+    constructor (id = 0, name = "") {
         this.value = id;
         this.name = name;
     }
 }
 
-module.exports = DataOptions;
+module.exports = DataOption;
