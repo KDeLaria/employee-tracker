@@ -7,6 +7,12 @@ const menu = ["View all departments",
     "Add a role",
     "Add an employee",
     "Update an employee's role",
+    "Update employee's manager",
+    "View employees by manager",
+    "View employees by department",
+    "Delete department",
+    "Delete role",
+    "Delete employee",
     "Quit"];
 
     function prepMenu (arr = []) {

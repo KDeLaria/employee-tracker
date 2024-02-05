@@ -1,7 +1,7 @@
 const inquirer = require("inquirer");
 const db = require("./config/connect");
-const DataOption = require("./models/data-option");
 const menuItems = require("./models/menu");
+const DataOption = require("./models/data-option");
 const Role = require("./models/role");
 const Employee = require("./models/employee");
 
@@ -37,6 +37,24 @@ function mainMenu() {
                 updateEmployee();
             }
             else if (response.menuItem === 7) {
+                updateEmployeeManager();
+            }
+            else if (response.menuItem === 8) {
+                displayManagerSEmployees();
+            }
+            else if (response.menuItem === 9) {
+                viewEmployeesByDept();
+            }
+            else if (response.menuItem === 10) {
+                deleteDept();
+            }
+            else if (response.menuItem === 11) {
+                deleteRole();
+            }
+            else if (response.menuItem === 12) {
+                deleteEmployee();
+            }
+            else if (response.menuItem === 13) {
                 if (db) {
                     db.end();// Closes database connection
                     console.log("Database connection has been closed.")
@@ -49,7 +67,7 @@ function mainMenu() {
 async function executeQuery(sqlString = "", queryData = null, ackMessage = null, displayTable = false) {
     try {
         // Queries with passed in variables
-        if (queryData || displayTable == false) {
+        if (queryData && displayTable == false) {
             db.query(sqlString, queryData, (err, data, fields) => {
                 if (err) { throw err; }
                 else {
@@ -322,7 +340,7 @@ async function updateEmployee() {
     }
 }
 
-function updateEmployeeManager () {///////////////////////////////////////////////////
+async function updateEmployeeManager () {
     try {
         console.clear();
         db.query(`select id, first_name, last_name
@@ -334,22 +352,22 @@ function updateEmployeeManager () {/////////////////////////////////////////////
             inquirer.prompt([
                 {
                     type: "list",
-                    message: "Select an employee to update their role.",
+                    message: "Select an employee update their manager.",
                     choices: employees,
                     name: "employee"
                 }
             ])
                 .then((response) => {
                     db.query(`SELECT employee.id AS id, employee.first_name AS first_name,
-                        employee.last_name AS last_name
-                        FROM employee
-                            INNER JOIN role ON role.id = employee.role_id
-                                INNER JOIN department on department.id = role.department_id
-                                    WHERE department.id = (
-                                    SELECT role.department_id
-                                    FROM role 
-                                    WHERE role.id = ?);`, 
-                                    response.role, (er, dat, flds) => {
+                    employee.last_name AS last_name
+                    FROM employee
+                        INNER JOIN role ON role.id = employee.role_id
+                            INNER JOIN department on department.id = role.department_id
+                                WHERE department.id = (
+                                SELECT role.department_id
+                                FROM role 
+                                WHERE role.id = (SELECT role_id FROM employee WHERE id = ?)) AND employee.id != ?;`, 
+                                [response.employee, response.employee], (er, dat, flds) => {
                         if (er) { throw er; }
                         const managers = dat.map(mngr => {
                             return new Employee(mngr.id, mngr.first_name, mngr.last_name);
@@ -365,7 +383,7 @@ function updateEmployeeManager () {/////////////////////////////////////////////
                         ]).then((res) => {
                             executeQuery(`UPDATE employee
                                     SET manager_id = ?
-                                    WHERE id = ?`, [res.manager_id, response.employee],
+                                    WHERE id = ?`, [res.manager, response.employee],
                                     "\nThe employee's manager has been updated.\n");
                             mainMenu();
                             return;
@@ -383,7 +401,7 @@ function updateEmployeeManager () {/////////////////////////////////////////////
 
 
 
-function displayManagerSEmployees () {
+async function displayManagerSEmployees () {
     try {
         console.clear();
         db.query(`SELECT id, first_name, last_name
@@ -397,7 +415,7 @@ function displayManagerSEmployees () {
             inquirer.prompt([
                 {
                     type: "list",
-                    message: "Select a manager to view their employees.",
+                    message: "Select a manager to view the employees that directly report to them.",
                     choices: managers,
                     name: "manager"
                 }
@@ -421,7 +439,7 @@ function displayManagerSEmployees () {
 }
 
 
-function viewEmployeesByDept () {
+async function viewEmployeesByDept () {
     try {
         console.clear();
         db.query("SELECT id, name FROM department;", (err, data, fields) => {
@@ -456,7 +474,7 @@ function viewEmployeesByDept () {
     }
 }
 
-function deleteDept () {
+async function deleteDept () {
     try {
         console.clear();
         db.query("SELECT id, name FROM department;", (err, data, fields) => {
@@ -474,7 +492,7 @@ function deleteDept () {
                 }
             ])
                 .then((response) => {
-                    executeQuery(`DELETE department
+                    executeQuery(`DELETE FROM department
                         WHERE id = ?;`, response.department,
                         "\nThe department has been deleted.\n");
                     mainMenu();
@@ -487,14 +505,14 @@ function deleteDept () {
     }
 }
 
-function deleteRole () {
+async function deleteRole () {
     console.clear();
-    db.query(`SELECT role.id, department.name, role.title
+    db.query(`SELECT role.id AS id, department.name AS name, role.title AS title
         FROM role
         INNER JOIN department on department.id = role.department_id`, (err, data, fields) => {
         if (err) { throw err; }
         const roles = data.map(role => {
-            return new Role(role.id, role.title, role.department);
+            return new Role(role.id, role.department, role.title);
         });
         inquirer.prompt([
             {
@@ -505,7 +523,7 @@ function deleteRole () {
             }
         ])
             .then((response) => {
-                executeQuery(`DELETE role
+                executeQuery(`DELETE FROM role
                     WHERE id = ?;`, response.role, "\nThe role has been deleted.\n");
                 mainMenu();
                 return;
@@ -514,10 +532,10 @@ function deleteRole () {
 
 }
 
-function deleteEmployee () {
+async function deleteEmployee () {
     console.clear();
-    db.query(`SELECT employee.id, employee.first_name, employee.last_name,
-     department.name, role.title, role.salary, employee.manager_id
+    db.query(`SELECT employee.id AS id, employee.first_name AS first_name, employee.last_name AS last_name,
+     department.name AS department, role.title AS title, employee.manager_id Manager
     FROM employee
         INNER JOIN role ON role.id = employee.role_id
             INNER JOIN department on department.id = role.department_id;`, (err, data, fields) => {
@@ -534,15 +552,13 @@ function deleteEmployee () {
             }
         ])
             .then((response) => {
-                executeQuery(`DELETE employee
+                executeQuery(`DELETE FROM employee
                     WHERE id = ?;`, response.employee, "\nThe employee has been deleted.\n");
                 mainMenu();
                 return;
             });
     });
 }
-
-
 
 function init() {
     mainMenu();
