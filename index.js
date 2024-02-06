@@ -55,6 +55,9 @@ function mainMenu() {
                 deleteEmployee();
             }
             else if (response.menuItem === 13) {
+                viewTotalDeptBudget();
+            }
+            else if (response.menuItem === 14) {
                 if (db) {
                     db.end();// Closes database connection
                     console.log("Database connection has been closed.")
@@ -250,28 +253,28 @@ async function addEmployee() {
                                     WHERE department.id = (
                                     SELECT role.department_id
                                     FROM role 
-                                    WHERE role.id = ?);`, 
-                                    response.role, (er, dat, flds) => {
-                        if (er) { throw er; }
-                        const managers = dat.map(mngr => {
-                            return new Employee(mngr.id, mngr.first_name, mngr.last_name);
-                        })
-                        managers.push({value: null, name: "none"});
-                        inquirer.prompt([
-                            {
-                                type: "list",
-                                message: "Select a manager for the new employee.",
-                                choices: managers,
-                                name: "manager"
-                            }
-                        ]).then((res) => {
-                            executeQuery(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
+                                    WHERE role.id = ?);`,
+                        response.role, (er, dat, flds) => {
+                            if (er) { throw er; }
+                            const managers = dat.map(mngr => {
+                                return new Employee(mngr.id, mngr.first_name, mngr.last_name);
+                            })
+                            managers.push({ value: null, name: "none" });
+                            inquirer.prompt([
+                                {
+                                    type: "list",
+                                    message: "Select a manager for the new employee.",
+                                    choices: managers,
+                                    name: "manager"
+                                }
+                            ]).then((res) => {
+                                executeQuery(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
                             VALUES (?, ?, ?, ?);`, [response.first_name, response.last_name, response.role,
-                            res.manager], "\nThe employee role has been updated.\n");
-                            mainMenu();
-                            return;
+                                res.manager], "\nThe employee role has been updated.\n");
+                                mainMenu();
+                                return;
+                            })
                         })
-                    })
                 });
         });
     }
@@ -341,7 +344,7 @@ async function updateEmployee() {
 
 // Populates a list of employees and managers for the employee's department
 // updates the employee's manager to the selected one
-async function updateEmployeeManager () {
+async function updateEmployeeManager() {
     try {
         console.clear();
         db.query(`select id, first_name, last_name
@@ -367,29 +370,29 @@ async function updateEmployeeManager () {
                                 WHERE department.id = (
                                 SELECT role.department_id
                                 FROM role 
-                                WHERE role.id = (SELECT role_id FROM employee WHERE id = ?)) AND employee.id != ?;`, 
-                                [response.employee, response.employee], (er, dat, flds) => {
-                        if (er) { throw er; }
-                        const managers = dat.map(mngr => {
-                            return new Employee(mngr.id, mngr.first_name, mngr.last_name);
-                        })
-                        managers.push({value: null, name: "none"});
-                        inquirer.prompt([
-                            {
-                                type: "list",
-                                message: "Select a manager for the new employee.",
-                                choices: managers,
-                                name: "manager"
-                            }
-                        ]).then((res) => {
-                            executeQuery(`UPDATE employee
+                                WHERE role.id = (SELECT role_id FROM employee WHERE id = ?)) AND employee.id != ?;`,
+                        [response.employee, response.employee], (er, dat, flds) => {
+                            if (er) { throw er; }
+                            const managers = dat.map(mngr => {
+                                return new Employee(mngr.id, mngr.first_name, mngr.last_name);
+                            })
+                            managers.push({ value: null, name: "none" });
+                            inquirer.prompt([
+                                {
+                                    type: "list",
+                                    message: "Select a manager for the new employee.",
+                                    choices: managers,
+                                    name: "manager"
+                                }
+                            ]).then((res) => {
+                                executeQuery(`UPDATE employee
                                     SET manager_id = ?
                                     WHERE id = ?`, [res.manager, response.employee],
                                     "\nThe employee's manager has been updated.\n");
-                            mainMenu();
-                            return;
+                                mainMenu();
+                                return;
+                            })
                         })
-                    })
                 });
         });
     }
@@ -402,7 +405,7 @@ async function updateEmployeeManager () {
 
 
 // Populates a list of managers and displays the employees that directly report to the selected manager
-async function displayManagerSEmployees () {
+async function displayManagerSEmployees() {
     try {
         console.clear();
         db.query(`SELECT id, first_name, last_name
@@ -440,7 +443,7 @@ async function displayManagerSEmployees () {
 }
 
 // Populates a list of departments that the user can select and view the employees from that department
-async function viewEmployeesByDept () {
+async function viewEmployeesByDept() {
     try {
         console.clear();
         db.query("SELECT id, name FROM department;", (err, data, fields) => {
@@ -480,7 +483,7 @@ async function viewEmployeesByDept () {
 }
 
 // Populates a list of departments that the user can select and delete from the database
-async function deleteDept () {
+async function deleteDept() {
     try {
         console.clear();
         db.query("SELECT id, name FROM department;", (err, data, fields) => {
@@ -512,7 +515,7 @@ async function deleteDept () {
 }
 
 // Populates a list of roles that the user can select from and delete from the database
-async function deleteRole () {
+async function deleteRole() {
     console.clear();
     db.query(`SELECT role.id AS id, department.name AS name, role.title AS title
         FROM role
@@ -540,7 +543,7 @@ async function deleteRole () {
 }
 
 // Populates a list of employees that the user can select from and delete from the database
-async function deleteEmployee () {
+async function deleteEmployee() {
     console.clear();
     db.query(`SELECT employee.id AS id, employee.first_name AS first_name, employee.last_name AS last_name,
      department.name AS department, role.title AS title, employee.manager_id Manager
@@ -566,6 +569,75 @@ async function deleteEmployee () {
                 return;
             });
     });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function viewTotalDeptBudget() {
+    try {
+        // console.clear();
+        // db.query("SELECT id, name FROM department;", (err, data, fields) => {
+        //     if (err) { throw err; }
+        //     const departments = data.map(dept => {
+        //         return new DataOption(dept.id, dept.name);
+        //     });
+
+        //     inquirer.prompt([
+        //         {
+        //             type: "list",
+        //             message: "Select a department to view the utilized budget.",
+        //             choices: departments,
+        //             name: "department"
+        //         }
+        //     ])
+        //         .then((response) => {
+        //             console.clear();
+        //             db.query(`SELECT role.salary AS salary
+        //     FROM employee
+        //     INNER JOIN role ON role.id = employee.role_id
+        //     INNER JOIN department on department.id = role.department_id
+        //     WHERE department.id = 1;`, (er, dat, flds) => {
+        //                 if (er) { throw er; }
+        //                 let total = 0;
+        //                 dat.map(salary => {
+        //                     total = total + salary.salary;
+        //                 });
+                        
+        //     // const departments = data.map(salary => {
+        //     //     return new DataOption(salary.id, dept.name);
+        //     // });
+        //                 inquirer.prompt([
+        //                     {
+        //                         type: "input",
+        //                         message: `The total utilized budget for the ${response.department} is $${total}.
+                                
+        //                         Press enter to continue.`,
+        //                         name: "placeholder"
+        //                     }
+        //                 ])
+        //                     .then(() => {
+                                mainMenu();
+                                return;
+        //                     });
+        //             });
+        //         });
+        // });
+    }
+    catch (err) {
+        console.log(err.message);
+    }
 }
 
 function init() {

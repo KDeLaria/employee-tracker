@@ -13,6 +13,7 @@ const menu = ["View all departments",
     "Delete department",
     "Delete role",
     "Delete employee",
+    "View Utilized budget by department",
     "Quit"];
 
     function prepMenu (arr = []) {
