@@ -615,9 +615,13 @@ async function viewTotalDeptBudget() {
         //                     total = total + salary.salary;
         //                 });
                         
-        //     // const departments = data.map(salary => {
-        //     //     return new DataOption(salary.id, dept.name);
-        //     // });
+            const salaries = dat.map(salary => {
+                return new DataOption(salary.salary);
+            });
+                let total = 0;
+                    for (let i = 0; i < salaries.length; i++) {
+                            total = total + salaries[i].toInt();
+                    }
         //                 inquirer.prompt([
         //                     {
         //                         type: "input",
