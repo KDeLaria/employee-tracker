@@ -1,6 +1,6 @@
 # Employee Tracker
 
-View the [walkthrough](https://drive.google.com/file/d/1Bl2KxUGLT5WLMLd0TSMdwyjaHlqlNSEh/view?usp=sharing).
+View the [walkthrough](https://drive.google.com/file/d/1xqSFKg74lcduvF46EPkjR9Uey9Ozf8-v/view?usp=sharing).
 
 
 ## Description
