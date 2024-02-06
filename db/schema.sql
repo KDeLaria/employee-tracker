@@ -24,12 +24,14 @@ CREATE TABLE employee (
   FOREIGN KEY (role_id)
   REFERENCES role(id)
   ON DELETE CASCADE,
-  manager_id INT DEFAULT NULL);
+  manager_id INT DEFAULT NULL
+  FOREIGN KEY (manager_id)
+  REFERENCES employee(id)
+  ON DELETE SET NULL);
 
-CREATE VIEW managers_view AS (SELECT employee2.first_name, employee2.last_name
-	FROM employee employee1, employee employee2
-    WHERE employee2.id = employee1.manager_id);
 
-  -- FOREIGN KEY (manager_id)
-  -- REFERENCES employee(id)
-  -- ON DELETE SET NULL
+CREATE VIEW managers_view AS SELECT employee2.id, employee2.first_name as manager_first_name, 
+employee2.last_name AS manager_last_name
+	FROM employee, employee employee2
+    WHERE employee2.id = employee.manager_id OR employee.manager_id IS NULL
+    ORDER BY employee.id;

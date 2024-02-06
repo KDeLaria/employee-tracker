@@ -16,14 +16,14 @@ VALUES  ("Associate", 25000, 1),
         ("Lead", 83000, 2);
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES  ("John", "Smith", 5, 2),
-        ("Daniel", "Johnson", 6, null),
+VALUES  ("Daniel", "Johnson", 6, null),
         ("Jane", "Martin", 4, null),
-        ("Rachael", "Nelson", 8, 5),
         ("Tami", "Grant", 7, null),
-        ("George", "Martin", 1, 1),
         ("Sarah", "Dwemer", 2, null),
-        ("Steve", "Andersen", 1, 2),
-        ("Emily", "Thompson", 9, 7),
-        ("James", "Larson", 3, 3),
-        ("Brian", "Jensen", 3, 3);
+        ("John", "Smith", 5, 1),
+        ("Steve", "Andersen", 1, 1),
+        ("Rachael", "Nelson", 8, 3),
+        ("Emily", "Thompson", 9, 4),
+        ("George", "Martin", 1, 5),
+        ("James", "Larson", 3, 2),
+        ("Brian", "Jensen", 3, 2);

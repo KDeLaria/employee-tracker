@@ -64,6 +64,7 @@ function mainMenu() {
         });
 }
 
+
 async function executeQuery(sqlString = "", queryData = null, ackMessage = null, displayTable = false) {
     try {
         // Queries with passed in variables
@@ -76,20 +77,7 @@ async function executeQuery(sqlString = "", queryData = null, ackMessage = null,
                 }
             });
         }
-        // Queries requesting data to be returned
-        // else if (menuQuery) {
-        //     db.query(sqlString, queryData, (err, data, fields) => {
-        //         if (err) { throw err; }
-        //         else {
-        //             if (ackMessage) { console.log(ackMessage) }
-        //             const records = data.map((record) => {
-        //                 return new DataOption(record.id, record.name);
-        //             })
-        //             return records;
-        //         }
-        //     });
-        // }
-        
+        // Displays a table
         else if (displayTable) {
             db.query(sqlString, queryData, (err, data) => {
                 if (err) { throw err; }
@@ -104,6 +92,7 @@ async function executeQuery(sqlString = "", queryData = null, ackMessage = null,
             });
         }
         // Queries without passed in variables
+        // Displays a table
         else {
             db.query(sqlString, (err, data) => {
                 if (err) { throw err; }
@@ -142,16 +131,21 @@ function displayRoles() {
 
 function displayEmployees() {
     console.clear();
-    executeQuery(`SELECT employee.id AS ID, employee.first_name AS 'First Name', 
-        employee.last_name AS 'Last Name', department.name AS Department,
-         role.title AS Title, role.salary AS Salary, employee.manager_id AS Manager
-        FROM employee
-            INNER JOIN role ON role.id = employee.role_id
-                INNER JOIN department on department.id = role.department_id;`);
+    executeQuery(`SELECT DISTINCT employee.id AS ID, employee.first_name AS 'First Name', 
+    employee.last_name AS 'Last Name', department.name AS Department,
+     role.title AS Title, role.salary AS Salary, employee.manager_id AS ManagerID, 
+     managers_view.manager_first_name AS "Manager's",
+     managers_view.manager_last_name AS Name
+    FROM employee
+     LEFT JOIN managers_view ON managers_view.id = employee.manager_id
+        INNER JOIN role ON role.id = employee.role_id
+            INNER JOIN department on department.id = role.department_id
+            order by id;`);
     mainMenu();
     return;
 }
 
+// Adds a department to the database
 async function addDepartment() {
     console.clear();
     inquirer.prompt([
@@ -172,7 +166,8 @@ async function addDepartment() {
 
 }
 
-//
+// Adds a new role once the title and salary are entered and the department is
+// seleted
 async function addRole() {
     try {
         console.clear();
@@ -184,6 +179,12 @@ async function addRole() {
 
             inquirer.prompt([
                 {
+                    type: "list",
+                    message: "Select a department for the role.",
+                    choices: departments,
+                    name: "department"
+                },
+                {
                     type: "input",
                     message: "Title: ",
                     name: "title"
@@ -192,12 +193,6 @@ async function addRole() {
                     type: "number",
                     message: "Salary: ",
                     name: "salary"
-                },
-                {
-                    type: "list",
-                    message: "Select a department for the role.",
-                    choices: departments,
-                    name: "department"
                 }
             ])
                 .then((response) => {
@@ -214,6 +209,8 @@ async function addRole() {
     }
 }
 
+// Enters a new employee into the database after the first name and last name are entered
+// and the role and manager are selected for the employee
 async function addEmployee() {
     try {
         console.clear();
@@ -284,6 +281,8 @@ async function addEmployee() {
 
 }
 
+// Populates a list of employees and roles from the employee's department
+// the new selected role will be updated in the database
 async function updateEmployee() {
     try {
         console.clear();
@@ -340,6 +339,8 @@ async function updateEmployee() {
     }
 }
 
+// Populates a list of employees and managers for the employee's department
+// updates the employee's manager to the selected one
 async function updateEmployeeManager () {
     try {
         console.clear();
@@ -400,7 +401,7 @@ async function updateEmployeeManager () {
 
 
 
-
+// Populates a list of managers and displays the employees that directly report to the selected manager
 async function displayManagerSEmployees () {
     try {
         console.clear();
@@ -438,7 +439,7 @@ async function displayManagerSEmployees () {
     }
 }
 
-
+// Populates a list of departments that the user can select and view the employees from that department
 async function viewEmployeesByDept () {
     try {
         console.clear();
@@ -457,13 +458,17 @@ async function viewEmployeesByDept () {
                 }
             ])
                 .then((response) => {
-                    executeQuery(`SELECT employee.id AS ID, employee.first_name AS 'First Name', 
-                        employee.last_name AS 'Last Name', department.name AS Department,
-                        role.title AS Title, role.salary AS Salary, employee.manager_id AS Manager
-                        FROM employee
-                            INNER JOIN role ON role.id = employee.role_id
-                                INNER JOIN department on department.id = role.department_id
-                                    WHERE department.id = ?;`, response.department, null, true);
+                    executeQuery(`SELECT DISTINCT employee.id AS ID, employee.first_name AS 'First Name', 
+                    employee.last_name AS 'Last Name', department.name AS Department,
+                     role.title AS Title, role.salary AS Salary, employee.manager_id AS ManagerID, 
+                     managers_view.manager_first_name AS "Manager's",
+                     managers_view.manager_last_name AS Name
+                    FROM employee
+                     LEFT JOIN managers_view ON managers_view.id = employee.manager_id
+                        INNER JOIN role ON role.id = employee.role_id
+                            INNER JOIN department on department.id = role.department_id
+                            WHERE department.id = ?
+                            order by id;`, response.department, null, true);
                     mainMenu();
                     return;
                 });
@@ -474,6 +479,7 @@ async function viewEmployeesByDept () {
     }
 }
 
+// Populates a list of departments that the user can select and delete from the database
 async function deleteDept () {
     try {
         console.clear();
@@ -505,6 +511,7 @@ async function deleteDept () {
     }
 }
 
+// Populates a list of roles that the user can select from and delete from the database
 async function deleteRole () {
     console.clear();
     db.query(`SELECT role.id AS id, department.name AS name, role.title AS title
@@ -532,6 +539,7 @@ async function deleteRole () {
 
 }
 
+// Populates a list of employees that the user can select from and delete from the database
 async function deleteEmployee () {
     console.clear();
     db.query(`SELECT employee.id AS id, employee.first_name AS first_name, employee.last_name AS last_name,
