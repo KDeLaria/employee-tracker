@@ -30,7 +30,7 @@ CREATE TABLE employee (
   ON DELETE SET NULL);
 
 
-CREATE VIEW managers_view AS SELECT employee2.id, employee2.first_name as manager_first_name, 
+CREATE VIEW managers_view AS SELECT DISTINCT employee2.id, employee2.first_name as manager_first_name, 
 employee2.last_name AS manager_last_name
 	FROM employee, employee employee2
     WHERE employee2.id = employee.manager_id OR employee.manager_id IS NULL
