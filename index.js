@@ -284,7 +284,7 @@ async function addEmployee() {
 
 }
 
-// Populates a list of employees and roles from the employee's department
+// Populates a list of employees and roles
 // the new selected role will be updated in the database
 async function updateEmployee() {
     try {
@@ -306,13 +306,7 @@ async function updateEmployee() {
                 .then((response) => {
                     db.query(`SELECT role.id AS id, department.name AS department, role.title AS title
                         FROM role
-                            INNER JOIN department on department.id = role.department_id
-                                WHERE department.id = (
-                                    SELECT role.department_id
-                                    FROM role
-                                        WHERE role.id IN (SELECT role_id
-                                        FROM employee
-                                        WHERE id = ?));`, response.employee,
+                            INNER JOIN department on department.id = role.department_id;`,
                         (er, dat, flds) => {
                             if (er) { throw er; }
                             const roles = dat.map(role => {
